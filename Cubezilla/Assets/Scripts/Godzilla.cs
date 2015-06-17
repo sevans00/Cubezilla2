@@ -19,6 +19,10 @@ public class Godzilla : MonoBehaviour, IGameEntity {
 
 	private float cubeSize = 0.4f;
 
+	public ParticleSystem flamePS;
+	public Collider flameCollider;
+	public GameObject flameGO;
+
 	public void DoStart ()
 	{ 
 		cityGrid = GameManager.instance.cityGrid;
@@ -50,6 +54,9 @@ public class Godzilla : MonoBehaviour, IGameEntity {
 			} else {
 				speed = 3f;
 			}
+
+			//Flame hack
+			CheckFlame(inputVector);
 
 			//Collision avoidance:
 			if ( true ) {
@@ -95,11 +102,23 @@ public class Godzilla : MonoBehaviour, IGameEntity {
 				Debug.DrawLine(globalF, globalF+inputVector);
 				Debug.DrawLine(globalL, globalL+inputVector);
 
-				if ( hitL ) {
-					inputVector = transform.TransformPoint( 0f, 0f, 0f );
 
+				//Hit both?  can't help you
+				if ( hitFL && hitFR ) {
+					inputVector = Vector3.zero;
 				}
-
+				else if ( hitFL || hitFR ) {
+					Vector3 next_GridPoint = Vector3.zero;
+					Vector2 current_GridPoint = cityGrid.worldPointToGridPoint(transform.position);
+					if ( hitFL ) {
+						next_GridPoint = cityGrid.worldPointToGridPoint(globalFL);
+					}
+					if ( hitFR ) {
+						next_GridPoint = cityGrid.worldPointToGridPoint(globalFR);
+					}
+					Vector3 normal = new Vector3(next_GridPoint.x - current_GridPoint.x, 0, next_GridPoint.y - current_GridPoint.y);
+					inputVector = normal;
+				}
 
 
 				moveTo(transform.position + inputVector);
@@ -126,8 +145,30 @@ public class Godzilla : MonoBehaviour, IGameEntity {
 
 
 
-
-
+	//Flame once
+	private float lastFlameTime = -1;
+	private bool isFlaming = false;
+	private float flameTime = 2f;
+	public void CheckFlame(Vector3 inputVector) {
+		if ( lastFlameTime + flameTime < Time.time ) {
+			isFlaming = false;
+		}
+		if ( Input.GetButtonDown("Fire3") && lastFlameTime + flameTime < Time.time) {
+			isFlaming = true;
+			lastFlameTime = Time.time;
+			Debug.Log("Flame!");
+		}
+		flameCollider.enabled = (isFlaming);
+		if ( isFlaming ) {
+			flamePS.startSpeed = 1f;//+inputVector.magnitude*speed;
+			if ( flamePS.isStopped )
+				flamePS.Play();
+		} else {
+			if ( flamePS.isPlaying ) {
+				flamePS.Stop();
+			}
+		}
+	}
 
 
 

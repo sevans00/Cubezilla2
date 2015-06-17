@@ -9,7 +9,7 @@ public class Civilian : MonoBehaviour, IGameEntity {
 	float viewRadius = 5f;
 	float runRadius = 1f;
 	float safeRadius = 2f;
-	float onFireTime = 3.0f;
+	float onFireTime = 1.0f;
 	float speedDeviation = 0.5f;
 	float maxRandTurn = 5.0f;
 	
@@ -25,7 +25,9 @@ public class Civilian : MonoBehaviour, IGameEntity {
 	
 	ParticleSystem flames;
 
-	public void DoStart () {
+	public void DoStart () { //This should be instead of Start
+	}
+	public void Start () {
 		cityGrid = GameObject.FindObjectOfType<CityGrid>();
 		GameObject zilla = GameObject.Find("Godzilla");
 		godzilla = zilla.transform;
@@ -49,8 +51,9 @@ public class Civilian : MonoBehaviour, IGameEntity {
 	}
 	
 	public void DoUpdate () {
-
-		/*
+		if ( !gameObject.activeSelf ) {
+			return;
+		}
 		float distToEnemy = Vector3.Distance(transform.position, godzilla.position);
 		if (distToEnemy < runRadius) {
 			fleeing = false;
@@ -62,7 +65,6 @@ public class Civilian : MonoBehaviour, IGameEntity {
 			fleeing = false;
 			RandomWalk();
 		}
-		*/
 	}
 	public void DoFixedUpdate () {
 
@@ -84,8 +86,9 @@ public class Civilian : MonoBehaviour, IGameEntity {
 	void Move( float speed ) {
 		//Non physics method:
 		Vector2 current_GridPoint = cityGrid.worldPointToGridPoint(transform.position);
-		float distance = speed * Time.deltaTime * 2f + transform.localScale.z;
+		float distance = speed * Time.deltaTime * 3f + transform.localScale.z;
 		Vector2 next_GridPoint = cityGrid.worldPointToGridPoint(transform.position + transform.forward * distance);
+		Debug.DrawLine(transform.position, transform.position + transform.forward*distance, Color.green, 1);
 		if ( current_GridPoint != next_GridPoint && !cityGrid.isGridPointAvailable(next_GridPoint) ) {
 			//Need to turn:
 			Vector3 direction = transform.forward;
@@ -93,8 +96,12 @@ public class Civilian : MonoBehaviour, IGameEntity {
 			direction = Vector3.Reflect(direction, normal);
 			direction.y = 0;
 			direction.Normalize();
-			Debug.DrawLine(transform.position, transform.position + direction, Color.red, 1);
-			Debug.DrawLine(transform.position, transform.position + transform.forward, Color.red, 1);
+			Debug.DrawLine(transform.position, transform.position + direction*distance, Color.red, 1);
+			RotateToDirection(direction);
+			next_GridPoint = cityGrid.worldPointToGridPoint(transform.position + transform.forward * distance);
+			if ( current_GridPoint != next_GridPoint && !cityGrid.isGridPointAvailable(next_GridPoint) ) {
+				direction = transform.forward*= -1;
+			}
 			RotateToDirection(direction);
 		}
 
@@ -148,11 +155,14 @@ public class Civilian : MonoBehaviour, IGameEntity {
 		}
 	}
 	
-	void OnFire() {
+	public void OnFire() {
+		StartCoroutine(DoOnFire());
+	}
+	IEnumerator DoOnFire() {
 		flames.Play();
 		Camera.main.GetComponent<AudioSource>().PlayOneShot(screamSounds, screamVolume);
-		//yield new WaitForSeconds(onFireTime);
-		Kill();
+		yield return new WaitForSeconds(onFireTime);
+		gameObject.SetActive(false);
 	}
 	
 	void Kill() {

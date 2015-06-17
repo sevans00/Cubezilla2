@@ -51,6 +51,7 @@
      <Compile Include="Assets\Scripts\Civilian.cs" />
      <Compile Include="Assets\Scripts\GameManager.cs" />
      <Compile Include="Assets\Scripts\Godzilla.cs" />
+     <Compile Include="Assets\Scripts\GodzillaFlame.cs" />
      <Compile Include="Assets\Scripts\IGameEntity.cs" />
      <Compile Include="Assets\Scripts\ObjectPool.cs" />
      <Compile Include="Assets\TK2DROOT\tk2d\Code\Camera\tk2dCamera.cs" />
